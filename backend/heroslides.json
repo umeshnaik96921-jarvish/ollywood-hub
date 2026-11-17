@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1794890923904",
+    "title": "daman",
+    "description": "a true doctor story",
+    "banner": "blob:http://localhost:3000/24618f02-cc1e-4247-8cb7-9c456f6bff87",
+    "year": "2024",
+    "director": "Nila madhaba panda",
+    "cast": [
+      "babushan mahanti"
+    ],
+    "createdAt": "2026-11-17T04:48:43.904Z"
+  },
+  {
+    "id": "1",
+    "title": "Daman",
+    "description": "A young doctor posted in the cut-off Malkangiri district battles malaria and superstition to save lives.",
+    "banner": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=1200",
+    "year": "2022",
+    "director": "Vishal Mourya, Debal Prasad Lenka",
+    "cast": [
+      "Babushhaan Mohanty",
+      "Dipanwit Dashmohapatra"
+    ]
+  }
+]

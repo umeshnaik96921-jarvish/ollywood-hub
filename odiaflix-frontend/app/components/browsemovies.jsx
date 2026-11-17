@@ -85,7 +85,7 @@ export default function BrowseMovies({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {movies.map((movie) => (
               <div
-                key={movie.id}
+                key={movie.id || movie._id}
                 className="group bg-[#111520] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-200 flex flex-col"
               >
                 <div className="relative h-44 w-full overflow-hidden">

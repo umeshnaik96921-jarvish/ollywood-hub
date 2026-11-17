@@ -13,7 +13,8 @@ import {
   Upload, 
   CheckCircle2,
   Menu,
-  X
+  X,
+  Image as ImageIcon
 } from "lucide-react";
 
 export default function AdminPanel() {
@@ -21,7 +22,7 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("products");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Form State for Adding Movie
+  // Form State for Adding Movie (Added videoUrl)
   const [movieData, setMovieData] = useState({
     title: "",
     genre: "Drama",
@@ -29,26 +30,52 @@ export default function AdminPanel() {
     director: "",
     cast: "",
     synopsis: "",
-    poster: ""
+    poster: "",
+    videoUrl: ""
+  });
+
+  // Form State for Adding Hero Slide Banner (Added videoUrl)
+  const [heroData, setHeroData] = useState({
+    title: "",
+    description: "",
+    banner: "",
+    year: "2026",
+    director: "",
+    cast: "",
+    videoUrl: ""
   });
 
   const fileInputRef = useRef(null);
+  const heroFileInputRef = useRef(null);
 
-  // Handle Input Changes
+  // Handle Input Changes for Movie
   const handleChange = (e) => {
     const { name, value } = e.target;
     setMovieData({ ...movieData, [name]: value });
   };
-// --- Custom movies aur delete logic ---
-  const [savedMovies, setSavedMovies] = useState([]);
 
-  // 1. Backend se saari movies load karne ke liye
+  // Handle Input Changes for Hero Slide
+  const handleHeroChange = (e) => {
+    const { name, value } = e.target;
+    setHeroData({ ...heroData, [name]: value });
+  };
+
+  // --- Custom movies aur delete logic ---
+  const [savedMovies, setSavedMovies] = useState([]);
+  const [heroSlides, setHeroSlides] = useState([]);
+
+  // 1. Backend se saari movies aur hero slides load karne ke liye
   useEffect(() => {
-  fetch("http://localhost:5000/api/movies")
-    .then((res) => res.json()) // ✅ Yeh line add karni hai
-    .then((data) => setSavedMovies(data))
-    .catch((err) => console.log("Error loading movies:", err));
-}, []);
+    fetch("http://localhost:5000/api/movies")
+      .then((res) => res.json())
+      .then((data) => setSavedMovies(data))
+      .catch((err) => console.log("Error loading movies:", err));
+
+    fetch("http://localhost:5000/api/hero-slides")
+      .then((res) => res.json())
+      .then((data) => setHeroSlides(data))
+      .catch((err) => console.log("Error loading hero slides:", err));
+  }, []);
 
   // 2. Backend se movie delete karne ke liye
   const handleDeleteMovie = async (id) => {
@@ -56,14 +83,27 @@ export default function AdminPanel() {
       await fetch(`http://localhost:5000/api/movies/${id}`, {
         method: "DELETE",
       });
-      // Screen se turant hatane ke liye
       const updatedMovies = savedMovies.filter((movie) => movie._id !== id && movie.id !== id);
       setSavedMovies(updatedMovies);
     } catch (err) {
       console.log("Error deleting movie:", err);
     }
   };
-  // Handle File Selector (Opens Local Folder)
+
+  // 3. Backend se Hero Slide delete karne ke liye
+  const handleDeleteHeroSlide = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/api/hero-slides/${id}`, {
+        method: "DELETE",
+      });
+      const updatedSlides = heroSlides.filter((slide) => slide.id !== id && slide._id !== id);
+      setHeroSlides(updatedSlides);
+    } catch (err) {
+      console.log("Error deleting hero slide:", err);
+    }
+  };
+
+  // Handle File Selector (Movie Poster)
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -72,7 +112,16 @@ export default function AdminPanel() {
     }
   };
 
-  // Save Movie to Backend Database (MongoDB)
+  // Handle File Selector (Hero Banner Poster)
+  const handleHeroFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setHeroData({ ...heroData, banner: imageUrl });
+    }
+  };
+
+  // Save Movie to Backend Database (MongoDB/JSON)
   const handleSaveMovie = async (e) => {
     e.preventDefault();
     if (!movieData.title || !movieData.synopsis) {
@@ -91,8 +140,6 @@ export default function AdminPanel() {
 
       if (response.ok) {
         alert("Movie successfully saved to database!");
-        
-        // Reset Form (Yeh ab function ke andar hai)
         setMovieData({
           title: "",
           genre: "Drama",
@@ -100,9 +147,9 @@ export default function AdminPanel() {
           director: "",
           cast: "",
           synopsis: "",
-          poster: ""
+          poster: "",
+          videoUrl: ""
         });
-
         window.location.reload();
       } else {
         alert("Failed to save movie.");
@@ -113,14 +160,48 @@ export default function AdminPanel() {
     }
   };
 
-     
+  // Save Hero Slide to Backend Database
+  const handleSaveHeroSlide = async (e) => {
+    e.preventDefault();
+    if (!heroData.title || !heroData.description || !heroData.banner) {
+      alert("Please fill in Title, Description, and Banner Image!");
+      return;
+    }
 
+    try {
+      const response = await fetch("http://localhost:5000/api/hero-slides", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(heroData),
+      });
 
+      if (response.ok) {
+        alert("Hero Banner successfully added!");
+        setHeroData({
+          title: "",
+          description: "",
+          banner: "",
+          year: "2026",
+          director: "",
+          cast: "",
+          videoUrl: ""
+        });
+        window.location.reload();
+      } else {
+        alert("Failed to save hero slide.");
+      }
+    } catch (err) {
+      console.log("Error saving hero slide:", err);
+      alert("Server error connecting to backend!");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0D12] text-white flex font-sans">
       
-      {/* SIDEBAR (Inspired by Image 1 & Wireframe 2) */}
+      {/* SIDEBAR */}
       <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#121620] border-r border-gray-800 p-5 flex flex-col transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-xl font-bold tracking-wider text-indigo-400">ଆମର ଓଡ଼ିଶା Admin</h1>
@@ -215,15 +296,15 @@ export default function AdminPanel() {
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={handleSaveMovie}
-                    className="flex items-center gap-2 bg-[#4B0082] hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition shadow-lg shadow-indigo-900/40"
+                    className="flex items-center gap-2 bg-[#4B0082] hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition shadow-lg shadow-indigo-900/40 cursor-pointer"
                   >
                     <PlusCircle size={18} /> Add / Save Movie
                   </button>
                 </div>
               </div>
 
-              {/* FORM & POSTER SECTION (Matching Wireframe 2) */}
-              <form onSubmit={handleSaveMovie} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* FORM & POSTER SECTION (Movie Form) */}
+              <form onSubmit={handleSaveMovie} className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                 
                 {/* General Information Inputs */}
                 <div className="lg:col-span-2 bg-[#121620] border border-gray-800 rounded-2xl p-6 shadow-xl">
@@ -298,6 +379,19 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
+                    {/* MOVIE YOUTUBE EMBED URL */}
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">YouTube Embed URL (Trailer/Movie)</label>
+                      <input 
+                        type="text" 
+                        name="videoUrl"
+                        value={movieData.videoUrl}
+                        onChange={handleChange}
+                        placeholder="https://www.youtube.com/embed/XYZ12345" 
+                        className="w-full bg-[#1A1F2C] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 text-sm"
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Movie Description / Synopsis</label>
                       <textarea 
@@ -313,7 +407,7 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
-                {/* Movie Poster Upload Section (Local Device File Explorer) */}
+                {/* Movie Poster Upload Section */}
                 <div className="bg-[#121620] border border-gray-800 rounded-2xl p-6 shadow-xl flex flex-col">
                   <h3 className="text-lg font-semibold border-b border-gray-800 pb-3 mb-6 text-indigo-300">Movie Poster</h3>
                   
@@ -334,7 +428,6 @@ export default function AdminPanel() {
                     )}
                   </div>
 
-                  {/* Hidden standard file input */}
                   <input 
                     type="file" 
                     ref={fileInputRef}
@@ -346,13 +439,152 @@ export default function AdminPanel() {
                   <button 
                     type="button"
                     onClick={() => fileInputRef.current.click()}
-                    className="mt-4 w-full bg-gray-800 hover:bg-gray-700 text-gray-200 py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2"
+                    className="mt-4 w-full bg-gray-800 hover:bg-gray-700 text-gray-200 py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Upload size={16} /> Choose File from Computer
                   </button>
                 </div>
 
               </form>
+
+              {/* ================= HERO BANNER SECTION ================= */}
+              <div className="border-t border-gray-800 pt-10 mb-12">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-red-400">Add / Change Hero Section Banner</h2>
+                    <p className="text-sm text-gray-400">Yeh movie website ke bilkul upar Hero Banner par Featured Movie ke taur par dikhegi.</p>
+                  </div>
+                  <button 
+                    onClick={handleSaveHeroSlide}
+                    className="flex items-center gap-2 bg-[#E50914] hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-medium transition shadow-lg shadow-red-900/40 cursor-pointer"
+                  >
+                    <PlusCircle size={18} /> Publish to Hero Banner
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveHeroSlide} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  
+                  <div className="lg:col-span-2 bg-[#121620] border border-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h3 className="text-lg font-semibold border-b border-gray-800 pb-3 mb-6 text-red-300">Hero Slide Details</h3>
+
+                    <div className="space-y-5">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Movie / Banner Title</label>
+                        <input 
+                          type="text" 
+                          name="title"
+                          value={heroData.title}
+                          onChange={handleHeroChange}
+                          placeholder="e.g. Daman" 
+                          required
+                          className="w-full bg-[#1A1F2C] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 text-sm"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Release Year</label>
+                          <input 
+                            type="text" 
+                            name="year"
+                            value={heroData.year}
+                            onChange={handleHeroChange}
+                            className="w-full bg-[#1A1F2C] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Director</label>
+                          <input 
+                            type="text" 
+                            name="director"
+                            value={heroData.director}
+                            onChange={handleHeroChange}
+                            placeholder="Director name"
+                            className="w-full bg-[#1A1F2C] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Cast</label>
+                          <input 
+                            type="text" 
+                            name="cast"
+                            value={heroData.cast}
+                            onChange={handleHeroChange}
+                            placeholder="Babushaan, Dipanwit"
+                            className="w-full bg-[#1A1F2C] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      {/* HERO YOUTUBE EMBED URL */}
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">YouTube Embed URL (Hero Trailer)</label>
+                        <input 
+                          type="text" 
+                          name="videoUrl"
+                          value={heroData.videoUrl}
+                          onChange={handleHeroChange}
+                          placeholder="https://www.youtube.com/embed/XYZ12345" 
+                          className="w-full bg-[#1A1F2C] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Hero Description</label>
+                        <textarea 
+                          name="description"
+                          rows="4"
+                          value={heroData.description}
+                          onChange={handleHeroChange}
+                          placeholder="Hero section ke niche jo summary dikhegi..."
+                          required
+                          className="w-full bg-[#1A1F2C] border border-gray-700 rounded-xl p-4 text-white focus:outline-none focus:border-red-500 text-sm resize-none"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hero Banner Image Upload */}
+                  <div className="bg-[#121620] border border-gray-800 rounded-2xl p-6 shadow-xl flex flex-col">
+                    <h3 className="text-lg font-semibold border-b border-gray-800 pb-3 mb-6 text-red-300">Hero Banner Background</h3>
+                    
+                    <div 
+                      onClick={() => heroFileInputRef.current.click()}
+                      className="flex-1 border-2 border-dashed border-gray-700 hover:border-red-500 bg-[#1A1F2C]/50 rounded-xl flex flex-col items-center justify-center p-6 text-center cursor-pointer transition min-h-[300px] relative overflow-hidden group"
+                    >
+                      {heroData.banner ? (
+                        <img src={heroData.banner} alt="Hero banner preview" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 rounded-full bg-red-950 flex items-center justify-center text-red-400 mb-4 group-hover:scale-110 transition">
+                            <ImageIcon size={28} />
+                          </div>
+                          <p className="text-sm font-medium text-white mb-1">Click to upload banner image</p>
+                          <p className="text-xs text-gray-400">Wide landscape poster recommended</p>
+                        </>
+                      )}
+                    </div>
+
+                    <input 
+                      type="file" 
+                      ref={heroFileInputRef}
+                      onChange={handleHeroFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+
+                    <button 
+                      type="button"
+                      onClick={() => heroFileInputRef.current.click()}
+                      className="mt-4 w-full bg-gray-800 hover:bg-gray-700 text-gray-200 py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Upload size={16} /> Choose Banner from Computer
+                    </button>
+                  </div>
+
+                </form>
+              </div>
+
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-96 text-center">
@@ -360,32 +592,64 @@ export default function AdminPanel() {
               <p className="text-sm text-gray-500">You can manage all movies seamlessly from the "Manage Movies" tab.</p>
             </div>
           )}
-{/* --- Added Movies List & Delete Section --- */}
-      <div className="mt-10 p-6 bg-gray-900 rounded-xl max-w-4xl mx-auto border border-gray-800">
-        <h2 className="text-xl font-bold text-white mb-4">Manage Added Movies</h2>
-        
-        {savedMovies.length === 0 ? (
-          <p className="text-gray-400">Abhi tak koi custom movie add nahi ki gayi hai.</p>
-        ) : (
-          <div className="space-y-3">
-            {savedMovies.map((movie) => (
-              <div key={movie.id} className="flex justify-between items-center bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div>
-                  <h3 className="text-white font-semibold text-lg">{movie.title}</h3>
-                  <p className="text-sm text-gray-400">Genre: {movie.genre} | Year: {movie.year} | Director: {movie.director}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteMovie(movie.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer"
-                >
-                  Delete
-                </button>
+
+          {/* --- Added Movies List & Delete Section --- */}
+          <div className="mt-10 p-6 bg-[#121620] rounded-2xl max-w-5xl mx-auto border border-gray-800 shadow-xl">
+            <h2 className="text-xl font-bold text-white mb-4">Manage Added Movies</h2>
+            
+            {savedMovies.length === 0 ? (
+              <p className="text-gray-400">Abhi tak koi custom movie add nahi ki gayi hai.</p>
+            ) : (
+              <div className="space-y-3">
+                {savedMovies.map((movie) => (
+                  <div key={movie.id || movie._id} className="flex justify-between items-center bg-[#1A1F2C] p-4 rounded-xl border border-gray-700">
+                    <div>
+                      <h3 className="text-white font-semibold text-lg">{movie.title}</h3>
+                      <p className="text-sm text-gray-400">Genre: {movie.genre} | Year: {movie.year} | Director: {movie.director}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMovie(movie.id || movie._id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Trash2 size={16} /> Delete
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
+
+          {/* --- Added Hero Slides List & Delete Section --- */}
+          <div className="mt-6 p-6 bg-[#121620] rounded-2xl max-w-5xl mx-auto border border-gray-800 shadow-xl mb-10">
+            <h2 className="text-xl font-bold text-red-400 mb-4">Manage Active Hero Banners</h2>
+            
+            {heroSlides.length === 0 ? (
+              <p className="text-gray-400">Abhi tak koi hero banner add nahi kiya gaya hai.</p>
+            ) : (
+              <div className="space-y-3">
+                {heroSlides.map((slide) => (
+                  <div key={slide.id || slide._id} className="flex justify-between items-center bg-[#1A1F2C] p-4 rounded-xl border border-gray-700">
+                    <div className="flex items-center gap-4">
+                      {slide.banner && <img src={slide.banner} alt="" className="w-16 h-10 object-cover rounded-lg" />}
+                      <div>
+                        <h3 className="text-white font-semibold text-lg">{slide.title} ({slide.year})</h3>
+                        <p className="text-xs text-gray-400">Trailer URL: {slide.videoUrl ? "Attached ✅" : "None ❌"}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteHeroSlide(slide.id || slide._id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Trash2 size={16} /> Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </main>
       </div>
     </div>

@@ -46,12 +46,13 @@ app.post('/api/movies', (req, res) => {
         
         const newMovie = {
             _id: uniqueId,
-            id: uniqueId, // Both IDs supported for safety
+            id: uniqueId,
             title: req.body.title || 'Untitled Movie',
-            description: req.body.description || '',
+            description: req.body.description || req.body.synopsis || '',
             director: req.body.director || '',
             actors: Array.isArray(req.body.actors) ? req.body.actors : [],
-            posterUrl: req.body.posterUrl || '',
+            poster: req.body.poster || '',
+            posterUrl: req.body.poster || req.body.posterUrl || '',
             videoUrl: req.body.videoUrl || '',
             genre: req.body.genre || 'Drama',
             year: req.body.year || 2026,
@@ -107,7 +108,81 @@ app.delete('/api/movies/:id', (req, res) => {
 });
 
 
-// --- USERS DATABASE & SECURE AUTH ROUTES (WITH HASHING) ---
+// --- HERO SLIDES DATABASE & ROUTES (WITH videoUrl) ---
+const heroFilePath = path.join(__dirname, 'heroslides.json');
+
+const getHeroData = () => {
+    if (!fs.existsSync(heroFilePath)) {
+        const defaultSlides = [
+            {
+                id: '1',
+                title: 'Daman',
+                description: 'A young doctor posted in the cut-off Malkangiri district battles malaria and superstition to save lives.',
+                banner: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=1200',
+                year: '2022',
+                director: 'Vishal Mourya, Debal Prasad Lenka',
+                cast: ['Babushhaan Mohanty', 'Dipanwit Dashmohapatra'],
+                videoUrl: 'https://www.youtube.com/embed/2g811Eo7K8U'
+            }
+        ];
+        fs.writeFileSync(heroFilePath, JSON.stringify(defaultSlides, null, 2));
+    }
+    try {
+        const data = fs.readFileSync(heroFilePath, 'utf8');
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        return [];
+    }
+};
+
+const saveHeroData = (slides) => {
+    fs.writeFileSync(heroFilePath, JSON.stringify(slides, null, 2));
+};
+
+// 1. Get all hero slides
+app.get('/api/hero-slides', (req, res) => {
+    res.status(200).json(getHeroData());
+});
+
+// 2. Add a new hero slide (With videoUrl support)
+app.post('/api/hero-slides', (req, res) => {
+    try {
+        const slides = getHeroData();
+        const newSlide = {
+            id: Date.now().toString(),
+            title: req.body.title || 'Untitled',
+            description: req.body.description || '',
+            banner: req.body.banner || '',
+            year: req.body.year || '2026',
+            director: req.body.director || '',
+            cast: Array.isArray(req.body.cast) ? req.body.cast : (req.body.cast ? req.body.cast.split(',') : []),
+            videoUrl: req.body.videoUrl || '', // <--- Trailler embed link saved here
+            createdAt: new Date().toISOString()
+        };
+
+        slides.unshift(newSlide);
+        saveHeroData(slides);
+        res.status(201).json(newSlide);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Delete a hero slide
+app.delete('/api/hero-slides/:id', (req, res) => {
+    try {
+        let slides = getHeroData();
+        const { id } = req.params;
+        slides = slides.filter(s => s.id !== id && s._id !== id);
+        saveHeroData(slides);
+        res.status(200).json({ message: 'Deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// --- USERS DATABASE & AUTH ROUTES ---
 const USERS_FILE = path.join(__dirname, 'users.json');
 
 const getUsersData = () => {
@@ -126,7 +201,6 @@ const saveUsersData = (users) => {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 };
 
-// Get all users route
 app.get('/api/users', (req, res) => {
   try {
     const users = getUsersData();
@@ -136,60 +210,33 @@ app.get('/api/users', (req, res) => {
   }
 });
 
-// 1. SECURE SIGNUP ROUTE (Password Hashed with Bcrypt)
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { name, email, password } = req.body;
         const users = getUsersData();
-
-        const existingUser = users.find(u => u.email === email);
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: 'User already exists with this email!' });
+        if (users.find(u => u.email === email)) {
+            return res.status(400).json({ success: false, message: 'User already exists!' });
         }
-
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newUser = { 
-            id: Date.now().toString(), 
-            name: name || 'User',
-            email, 
-            password: hashedPassword 
-        };
-
+        const newUser = { id: Date.now().toString(), name: name || 'User', email, password: hashedPassword };
         users.push(newUser);
         saveUsersData(users);
-
         res.status(201).json({ success: true, message: 'Signup successful!', user: { email, name: newUser.name } });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// 2. SECURE LOGIN ROUTE (Verify Hashed Password & Return JWT)
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const users = getUsersData();
-
         const user = users.find(u => u.email === email);
-        if (!user) {
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ success: false, message: 'Invalid email or password!' });
         }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password!' });
-        }
-
         const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
-
-        res.status(200).json({ 
-            success: true, 
-            message: 'Login successful!', 
-            token, 
-            name: user.name || 'User',
-            user: { email } 
-        });
+        res.status(200).json({ success: true, message: 'Login successful!', token, name: user.name || 'User', user: { email } });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
