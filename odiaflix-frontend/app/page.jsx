@@ -11,7 +11,7 @@ export default function HomePage() {
   const [moviesList, setMoviesList] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/movies")
+    fetch("http://ollywood-hub.onrender.com/api/movies")
       .then((res) => res.json())
       .then((data) => {
         setMoviesList(data); // Database ki saari movies yahan save ho jayengi

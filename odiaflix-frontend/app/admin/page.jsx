@@ -66,12 +66,12 @@ export default function AdminPanel() {
 
   // 1. Backend se saari movies aur hero slides load karne ke liye
   useEffect(() => {
-    fetch("http://localhost:5000/api/movies")
+    fetch("http://ollywood-hub.onrender.com/api/movies")
       .then((res) => res.json())
       .then((data) => setSavedMovies(data))
       .catch((err) => console.log("Error loading movies:", err));
 
-    fetch("http://localhost:5000/api/hero-slides")
+    fetch("http://ollywood-hub.onrender.com/api/hero-slides")
       .then((res) => res.json())
       .then((data) => setHeroSlides(data))
       .catch((err) => console.log("Error loading hero slides:", err));
@@ -80,7 +80,7 @@ export default function AdminPanel() {
   // 2. Backend se movie delete karne ke liye
   const handleDeleteMovie = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/movies/${id}`, {
+      await fetch(`http://ollywood-hub.onrender.com/api/movies/${id}`, {
         method: "DELETE",
       });
       const updatedMovies = savedMovies.filter((movie) => movie._id !== id && movie.id !== id);
@@ -93,7 +93,7 @@ export default function AdminPanel() {
   // 3. Backend se Hero Slide delete karne ke liye
   const handleDeleteHeroSlide = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/hero-slides/${id}`, {
+      await fetch(`http://ollywood-hub.onrender.com/api/hero-slides/${id}`, {
         method: "DELETE",
       });
       const updatedSlides = heroSlides.filter((slide) => slide.id !== id && slide._id !== id);
@@ -130,7 +130,7 @@ export default function AdminPanel() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/movies", {
+      const response = await fetch("http://ollywood-hub.onrender.com/api/movies", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,7 +169,7 @@ export default function AdminPanel() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/hero-slides", {
+      const response = await fetch("http://ollywood-hub.onrender.com/api/hero-slides", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
