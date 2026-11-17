@@ -53,7 +53,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="max-w-7xl mx-auto pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500">
-        <p>© {new Date().getFullYear()} OdiaFlix. Made with <Heart className="w-3 h-3 inline text-[#E50914] mx-1" /> for Odia Cinema.</p>
+        <p>2026 OdiaFlix. Made with <Heart className="w-3 h-3 inline text-[#E50914] mx-1" /> for Odia Cinema.</p>
         <p className="mt-2 sm:mt-0">Celebrating Atavi & Kalahandi Roots 🚀&copy; 2026 odiaflix.</p>
       </div>
     </footer>
