@@ -37,7 +37,7 @@ export default function HeroSection({
 
   // Backend API se slides fetch karna
   useEffect(() => {
-    fetch("http://ollywood-hub.onrender.com/api/hero-slides")
+    fetch("https://ollywood-hub.onrender.com/api/hero-slides")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {
