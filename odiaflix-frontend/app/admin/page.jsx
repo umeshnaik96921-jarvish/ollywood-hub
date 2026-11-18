@@ -107,8 +107,11 @@ export default function AdminPanel() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setMovieData({ ...movieData, poster: imageUrl });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMovieData({ ...movieData, poster: reader.result }); // Base64 string
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -116,8 +119,11 @@ export default function AdminPanel() {
   const handleHeroFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setHeroData({ ...heroData, banner: imageUrl });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setHeroData({ ...heroData, banner: reader.result }); // Base64 string
+      };
+      reader.readAsDataURL(file);
     }
   };
 
